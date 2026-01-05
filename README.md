@@ -61,4 +61,18 @@ vault write auth/approle/role/example-role \
   secret_id_num_uses=0
 ```
 
+## Install VSO
+Install the Vault Secrets Operator Helm chart with the csi.enabled flag set to true to deploy the CSI driver as a DaemonSet running on every node:
+
+```bash
+helm repo update
+helm install                           \
+    --version 1.0.0                    \
+    --create-namespace                 \
+    --namespace vault-secrets-operator \
+    --set "csi.enabled=true"           \
+    vault-secrets-operator             \
+    hashicorp/vault-secrets-operator
+
+```
 
