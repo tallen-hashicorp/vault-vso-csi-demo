@@ -61,6 +61,17 @@ vault write auth/approle/role/example-role \
   secret_id_num_uses=0
 ```
 
+## Create the VSO / CSI policy
+
+The CSI driver requires a Vault policy to allow it to read secrets and (optionally) generate AppRole secret IDs.
+
+The policy definition is stored in [csi-driver.hcl](csi-driver.hcl).
+
+Apply the policy using:
+```bash
+vault policy write csi-driver csi-driver.hcl
+```
+
 ## Install VSO
 Install the Vault Secrets Operator Helm chart with the csi.enabled flag set to true to deploy the CSI driver as a DaemonSet running on every node:
 
