@@ -1,13 +1,13 @@
 # vault-vso-csi-demo
 
 Demo for Vault VSO and CSI integration.  
-This demo uses **Vault Enterprise 1.21.x**, which you can download from the Vault releases page.  
+This demo uses **Vault Enterprise 1.21.x**, which you can download from the [Vault releases page](https://releases.hashicorp.com/vault/).  
 Vault Enterprise is required for this feature.
 
 This walkthrough is based on the following guide, with additional context added for clarity:
 
-- Vault CSI + VSO setup guide  
-- Vault CSI feature overview  
+- [Vault CSI + VSO setup guide](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi/setup)
+- [Vault CSI feature overview] (https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi)
 
 ## Start Vault
 
