@@ -7,7 +7,7 @@ Vault Enterprise is required for this feature.
 This walkthrough is based on the following guide, with additional context added for clarity:
 
 - [Vault CSI + VSO setup guide](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi/setup)
-- [Vault CSI feature overview] (https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi)
+- [Vault CSI feature overview](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi)
 
 ## Start Vault
 
