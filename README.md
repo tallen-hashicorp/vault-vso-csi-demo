@@ -91,6 +91,16 @@ helm install                           \
 ## Teseting From Jan
 [link](https://developer.hashicorp.com/validated-patterns/vault/vault-kubernetes-auth)
 
+### Start Vault
+```bash
+export VAULT_LICENSE=""
+vault server -config=vault.hcl
+
+## In New Terminal Tab
+vault operator init -key-shares=1 -key-threshold=1
+vault operator unseal 
+```
+
 ```bash
 vault namespace create admin
 vault namespace create -namespace="admin" tenant-1
@@ -126,6 +136,8 @@ metadata:
     kubernetes.io/service-account.name: vault-sa
 type: kubernetes.io/service-account-token
 EOF
+
+kubectl apply -f vault-secret.yaml
 ```
 
 ```bash
@@ -139,7 +151,7 @@ export KUBERNETES_URL=$(kubectl config view --minify \
   -o jsonpath='{.clusters[0].cluster.server}')
 
 vault write -namespace="admin/tenant-1" auth/kubernetes/config \
-  use_annotations_as_alias_metadata=true \
+  use_annotationfs_as_alias_metadata=true \
   token_reviewer_jwt="${SA_TOKEN}" \
   kubernetes_host="${KUBERNETES_URL}" \
   kubernetes_ca_cert="${KUBERNETES_CA}"
@@ -166,7 +178,56 @@ vault write -namespace="admin/tenant-1" auth/kubernetes/role/my-app \
     bound_service_account_names=my-app \
     bound_service_account_namespaces=app-1 \
     policies=my-app-policy \
-    audience=https://kubernetes.default.svc \
+    audience=https://kubernetes.default.svc.cluster.local \
     ttl=1h
 ```
 ** Next Install VSO **
+
+```bash
+kubectl create ns vault-secrets-operator-system
+```
+
+Rememeber to update IP in [vault-operator-values.yaml](vault-operator-values.yaml)
+
+```bash
+helm install vault-secrets-operator hashicorp/vault-secrets-operator \
+  --namespace vault-secrets-operator-system \
+  --values vault-operator-values.yaml
+```
+
+```bash
+kubectl create clusterrole read-serviceaccounts \
+  --verb="list" \
+  --verb="get" \
+  --resource=serviceaccounts
+
+kubectl create clusterrolebinding read-serviceaccounts-binding \
+  --clusterrole=read-serviceaccounts \
+  --serviceaccount=vault-auth:vault-sa
+
+kubectl auth can-i get serviceaccounts \
+  --as system:serviceaccount:vault-auth:vault-sa
+
+kubectl create ns app-1
+
+kubectl apply -f service-account-my-app.yml
+
+export APP_TOKEN=$(vault write -namespace="admin/tenant-1" -field="token" \
+  auth/kubernetes/login \
+  role=my-app \
+  jwt=$(kubectl create token -n app-1 my-app))
+
+VAULT_TOKEN=$APP_TOKEN vault kv get \
+  -namespace="admin/tenant-1" \
+  -mount=secret team-a/my-app/test 
+```
+
+```bash
+kubectl apply -f static-auth.yaml
+kubectl apply -f static-secret.yaml
+```
+
+```bash
+kubectl describe vaultstaticsecret.secrets.hashicorp.com/vault-kv-app -n app-1
+kubectl get secrets secretkv -n app-1 -o yaml
+```

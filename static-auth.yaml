@@ -1,0 +1,14 @@
+  apiVersion: secrets.hashicorp.com/v1beta1
+  kind: VaultAuth
+  metadata:
+    name: static-auth
+    namespace: app-1
+  spec:
+    namespace: admin/tenant-1
+    method: kubernetes
+    mount: kubernetes
+    kubernetes:
+      role: my-app
+      serviceAccount: my-app
+      audiences:
+        - https://kubernetes.default.svc.cluster.local

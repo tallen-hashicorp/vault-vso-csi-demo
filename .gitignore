@@ -39,3 +39,4 @@ terraform.rc
 notes.md
 accessor_kubernetes.txt
 my-app-policy.hcl
+vault-ca.pem
