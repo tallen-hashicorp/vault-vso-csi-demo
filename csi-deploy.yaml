@@ -20,7 +20,7 @@ spec:
       - name: app-1
         image: busybox:latest
         command: ['/bin/sh', '-c', '--']
-        args: ['while true; do cat /var/run/csi-secrets/static_secret_0_username && cat /var/run/csi-secrets/static_secret_0_password; echo; sleep 10; done;']
+        args: ['while true; do cat /var/run/csi-secrets/static_secret_0_user && cat /var/run/csi-secrets/static_secret_0_password; echo; sleep 10; done;']
         volumeMounts:
         - name: csi-secrets
           mountPath: /var/run/csi-secrets

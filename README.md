@@ -269,6 +269,8 @@ kubectl replace --force -f csi-deploy.yaml -n app-1
 kubectl logs deploy/my-app -n app-1 --follow
 ```
 
+This guide has walked you through the integration of HashiCorp Vault with Kubernetes service accounts to securely manage secrets across your Kubernetes environment. By leveraging Kubernetes service accounts and their metadata, you can ensure that only authorized applications have access to sensitive data.
+
 ## Open Shift Specific
 On OpenShift, the Kubernetes administrator must grant the appropriate Security Context Constraints (SCCs) to the Vault Secrets Operator service accounts and explicitly trust the CSI driver so that it can mount secrets into application pods. First, grant the `privileged` SCC to the Vault Secrets Operator controller manager and CSI service accounts. This allows the operator components to run with the permissions required by OpenShift to manage CSI volumes.
 
