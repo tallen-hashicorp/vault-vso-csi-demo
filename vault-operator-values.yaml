@@ -2,5 +2,7 @@
     enabled: true
     address: "http://vault.vault-server.svc.cluster.local:8200"
     skipTLSVerify: true
+  csi:
+    enabled: true
   defaultAuthMethod:
     enabled: false

@@ -135,6 +135,10 @@ path "secret/data/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metad
 path "secret/metadata/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.BusinessSegmentName}}/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.AppName}}/*" {
       capabilities = ["list", "read"]
 }
+# CSI Driver
+path "sys/license/status" {
+    capabilities = ["read"]
+}
 EOF
 
 vault policy write -namespace="admin/tenant-1" my-app-policy \
@@ -150,6 +154,9 @@ vault write -namespace="admin/tenant-1" auth/kubernetes/role/my-app \
   policies=my-app-policy \
   audience=https://kubernetes.default.svc.cluster.local \
   ttl=1h
+
+kubectl get secrets secretkv -n app-1 -o json \
+  | jq -r '.data.password' | base64 --decode
 ```
 
 ## Install Vault Secrets Operator (VSO)
@@ -206,9 +213,15 @@ VAULT_TOKEN=$APP_TOKEN vault kv get \
   -mount=secret team-a/my-app/test
 ```
 
+**[config-vault.sh finished here](config-vault.sh)**
+
 ## Configure VSO Static Secret Sync
 
-Apply the VSO `VaultAuth` and `VaultStaticSecret` resources.
+The Kubernetes administrator needs to deploy and configure the VaultAuth and VaultStaticSecret resources to enable syncing secrets from Vault to Kubernetes.
+
+Define and apply the VaultAuth configuration by creating a YAML configuration file for the VaultAuth resource. The VaultAuth resource specifies how the VSO authenticates with Vault, including the namespace, authentication method, and the role associated with the Kubernetes Service Account. [static-secret.yaml](static-secret.yaml)
+
+Define and apply the VaultStaticSecret configuration by creating a YAML configuration file for the VaultStaticSecret resource. This resource defines the secret to be synced from Vault to Kubernetes, including the type of secret, the path, and destination details. You also set a refresh interval (refreshAfter), which controls how often the secret is checked for updates.  For demonstration purposes this is set rather short to 30s, but this could also be longer depending on the needs of the consuming applications. [static-secret.yaml](static-secret.yaml)
 
 ```bash
 kubectl apply -f static-auth.yaml
@@ -220,4 +233,37 @@ Verify that the static secret is reconciled and synced to a Kubernetes Secret.
 ```bash
 kubectl describe vaultstaticsecret.secrets.hashicorp.com/vault-kv-app -n app-1
 kubectl get secrets secretkv -n app-1 -o yaml
+```
+
+**Optional**
+```bash
+vault kv put -namespace="admin/tenant-1" \
+  -mount=secret team-a/my-app/test \
+  username=moin \
+  password=consul
+```
+
+## Deploy and sync a CSI secret
+
+
+## Open Shift Specific
+On OpenShift, the Kubernetes administrator must grant the appropriate Security Context Constraints (SCCs) to the Vault Secrets Operator service accounts and explicitly trust the CSI driver so that it can mount secrets into application pods. First, grant the `privileged` SCC to the Vault Secrets Operator controller manager and CSI service accounts. This allows the operator components to run with the permissions required by OpenShift to manage CSI volumes.
+
+```bash
+$ oc adm policy add-scc-to-user privileged \
+  -z vault-secrets-operator-controller-manager \
+  -n vault-secrets-operator-system
+
+$ oc adm policy add-scc-to-user privileged \
+  -z vault-secrets-operator-csi \
+  -n vault-secrets-operator-system
+```
+
+Next, label the `csi.vso.hashicorp.com` `CSIDriver` resource with the `security.openshift.io/csi-ephemeral-volume-profile=restricted` key. This instructs OpenShift to trust the Vault Secrets Operator CSI driver for use in restricted environments and to allow its ephemeral volumes to be attached to pods that use the restricted security profile.
+
+```shell-session
+$ oc label csidriver csi.vso.hashicorp.com \
+  security.openshift.io/csi-ephemeral-volume-profile=restricted --overwrite
+
+$ oc get csidriver csi.vso.hashicorp.com
 ```
