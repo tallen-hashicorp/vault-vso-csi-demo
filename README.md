@@ -43,6 +43,8 @@ export VAULT_TOKEN=''
 
 Create an admin namespace and a tenant namespace, then enable a KV v2 secrets engine and write some example secrets that will later be accessed via VSO and CSI.
 
+If you are feeling lazy here simply run `bash config-vault.sh` to take you to [Configure VSO Static Secret Sync](#configure-vso-static-secret-sync)
+
 ```bash
 vault namespace create admin
 vault namespace create -namespace="admin" tenant-1
