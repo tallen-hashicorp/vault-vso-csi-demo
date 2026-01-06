@@ -12,15 +12,31 @@ This walkthrough is based on the following guides, with additional context added
 
 ## Start and Configure Vault
 
-Start Vault Enterprise and initialise and unseal it. This lab assumes a single-node development-style setup.
+Start Vault Enterprise and initialise and unseal it. This lab assumes a single-node development-style setup and will deploy Vault Ent into K8s.
 
 ```bash
-export VAULT_LICENSE=""
-vault server -config=vault.hcl
+kubectl create namespace vault-server
+export VAULT_LICENSE=$(cat /path/to/vault.hclic)
 
-## In a new terminal tab
+kubectl create secret generic vault-license \
+  -n vault-server \
+  --from-literal=license.hclic="$VAULT_LICENSE"
+
+kubectl apply -f vault-k8s-deploy.yaml
+```
+
+Lets port forward to access our vault
+```bash
+kubectl port-forward -n vault-server service/vault 8200:8200
+```
+
+Now that Vault has started that init it
+```bash
+export VAULT_ADDR='http://127.0.0.1:8200'
 vault operator init -key-shares=1 -key-threshold=1
 vault operator unseal
+
+export VAULT_TOKEN=''
 ```
 
 ## Create Namespaces and Enable KV Secrets
@@ -90,10 +106,11 @@ export KUBERNETES_URL=$(kubectl config view --minify \
   -o jsonpath='{.clusters[0].cluster.server}')
 
 vault write -namespace="admin/tenant-1" auth/kubernetes/config \
-  use_annotationfs_as_alias_metadata=true \
+  use_annotations_as_alias_metadata=true \
   token_reviewer_jwt="${SA_TOKEN}" \
   kubernetes_host="${KUBERNETES_URL}" \
   kubernetes_ca_cert="${KUBERNETES_CA}"
+
 ```
 
 Extract the Kubernetes auth accessor for use in a policy template.
@@ -110,14 +127,13 @@ This policy allows workloads to read only the secrets that match their identity 
 
 ```bash
 tee my-app-policy.hcl <<EOF
-# Allows reading KV secrets for the bound application
+# Allows to read K/V secrets 
 path "secret/data/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.BusinessSegmentName}}/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.AppName}}/*" {
-  capabilities = ["read"]
+    capabilities = ["read"]
 }
-
-# Allows reading KV secret metadata and versions
+# Allows reading K/V secret versions and metadata
 path "secret/metadata/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.BusinessSegmentName}}/{{identity.entity.aliases.$(cat accessor_kubernetes.txt).metadata.AppName}}/*" {
-  capabilities = ["list", "read"]
+      capabilities = ["list", "read"]
 }
 EOF
 
