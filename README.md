@@ -22,7 +22,7 @@ kubectl create secret generic vault-license \
   -n vault-server \
   --from-literal=license.hclic="$VAULT_LICENSE"
 
-kubectl apply -f vault-k8s-deploy.yaml
+kubectl apply -f vault-k8s-deploy.yaml 
 ```
 
 Lets port forward to access our vault
@@ -30,7 +30,7 @@ Lets port forward to access our vault
 kubectl port-forward -n vault-server service/vault 8200:8200
 ```
 
-Now that Vault has started that init it
+Now that Vault has started in a new terminal lets init it
 ```bash
 export VAULT_ADDR='http://127.0.0.1:8200'
 vault operator init -key-shares=1 -key-threshold=1

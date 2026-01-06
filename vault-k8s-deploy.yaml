@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: vault-server
+data:
+  vault.hcl: |
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+
+    api_addr = "http://127.0.0.1:8200"
+    cluster_addr = "https://127.0.0.1:8201"
+
+    storage "file" {
+      path = "/vault/data"
+    }
+
+    ui            = true
+    disable_mlock = true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-ent
+  namespace: vault-server
+  labels:
+    app: vault-ent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-ent
+  template:
+    metadata:
+      labels:
+        app: vault-ent
+    spec:
+      containers:
+        - name: vault-ent
+          image: hashicorp/vault-enterprise:1.21.1-ent
+          command: ["vault", "server", "-config=/vault/config/vault.hcl"]
+          env:
+            - name: VAULT_LICENSE
+              valueFrom:
+                secretKeyRef:
+                  name: vault-license
+                  key: license.hclic
+          ports:
+            - name: http
+              containerPort: 8200
+          volumeMounts:
+            - name: config
+              mountPath: /vault/config
+            - name: data
+              mountPath: /vault/data
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: vault-server
+spec:
+  type: ClusterIP
+  selector:
+    app: vault-ent
+  ports:
+    - name: http
+      port: 8200
+      targetPort: 8200
