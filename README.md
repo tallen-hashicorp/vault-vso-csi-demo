@@ -244,7 +244,30 @@ vault kv put -namespace="admin/tenant-1" \
 ```
 
 ## Deploy and sync a CSI secret
+The Kubernetes administrator needs to deploy and configure the VaultAuth and CSISecrets resources to enable syncing secrets from Vault to Kubernetes using the CSI driver.
 
+Define and apply the VaultAuth configuration by creating a YAML configuration file for the VaultAuth resource. The VaultAuth resource specifies how the VSO authenticates with Vault, including the namespace, authentication method, and the role associated with the Kubernetes Service Account. [static-auth.yaml](static-auth.yaml)
+
+Define and apply the CSISecrets configuration by creating a YAML configuration file for the VaultStaticSecret resource. The CSISecrets resource defines the secrets to sync from Vault, including the mount path, secret path, access control patterns for service accounts/namespaces/pods, and container state sync configuration.
+
+```bash
+kubectl apply -f static-auth.yaml
+kubectl apply -f csi-secret.yaml
+```
+
+Verify the CSISecrets resource deployment.
+
+```bash
+kubectl get CSISecrets vault-kv-app -n app-1
+kubectl describe CSISecrets vault-kv-app -n app-1
+```
+
+Deploy a test application that consumes the CSI secrets. This deployment creates pods named my-app that mount the CSI secrets volume and continuously read the synced username and password values.
+
+```bash
+kubectl replace --force -f csi-deploy.yaml -n app-1
+kubectl logs deploy/my-app -n app-1 --follow
+```
 
 ## Open Shift Specific
 On OpenShift, the Kubernetes administrator must grant the appropriate Security Context Constraints (SCCs) to the Vault Secrets Operator service accounts and explicitly trust the CSI driver so that it can mount secrets into application pods. First, grant the `privileged` SCC to the Vault Secrets Operator controller manager and CSI service accounts. This allows the operator components to run with the permissions required by OpenShift to manage CSI volumes.
