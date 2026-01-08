@@ -10,6 +10,8 @@ This walkthrough is based on the following guides, with additional context added
 - [Vault CSI + VSO setup guide](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi/setup)
 - [Vault CSI feature overview](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi)
 - [Kubernetes Vault integration via Sidecar Agent Injector vs. Vault Secrets Operator vs. CSI provider](https://www.hashicorp.com/en/blog/kubernetes-vault-integration-via-sidecar-agent-injector-vs-csi-provider)
+- [API Reference](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/api-reference)
+- [API Reference - Rollout Restart Target](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/api-reference#rolloutrestarttarget)
 
 ## Start and Configure Vault
 
