@@ -9,6 +9,7 @@ This walkthrough is based on the following guides, with additional context added
 - [VSO Tutorial](https://developer.hashicorp.com/validated-patterns/vault/vault-kubernetes-auth)
 - [Vault CSI + VSO setup guide](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi/setup)
 - [Vault CSI feature overview](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso/csi)
+- [Kubernetes Vault integration via Sidecar Agent Injector vs. Vault Secrets Operator vs. CSI provider](https://www.hashicorp.com/en/blog/kubernetes-vault-integration-via-sidecar-agent-injector-vs-csi-provider)
 
 ## Start and Configure Vault
 
@@ -63,6 +64,8 @@ vault kv put -namespace="admin/tenant-1" \
 ```
 
 ## Create Kubernetes Service Account for Vault Auth
+
+![K8s Auth](./docs/1643214683-vault-k8s-auth-blog.webp)
 
 Create a service account and bind it with permissions so Vault can use it for Kubernetes authentication.
 
@@ -225,6 +228,8 @@ Define and apply the VaultAuth configuration by creating a YAML configuration fi
 
 Define and apply the VaultStaticSecret configuration by creating a YAML configuration file for the VaultStaticSecret resource. This resource defines the secret to be synced from Vault to Kubernetes, including the type of secret, the path, and destination details. You also set a refresh interval (refreshAfter), which controls how often the secret is checked for updates.  For demonstration purposes this is set rather short to 30s, but this could also be longer depending on the needs of the consuming applications. [static-secret.yaml](static-secret.yaml)
 
+![Secret Flow](./docs/vso_secrets_flow.png)
+
 ```bash
 kubectl apply -f static-auth.yaml
 kubectl apply -f static-secret.yaml
@@ -251,6 +256,8 @@ The Kubernetes administrator needs to deploy and configure the VaultAuth and CSI
 Define and apply the VaultAuth configuration by creating a YAML configuration file for the VaultAuth resource. The VaultAuth resource specifies how the VSO authenticates with Vault, including the namespace, authentication method, and the role associated with the Kubernetes Service Account. [static-auth.yaml](static-auth.yaml)
 
 Define and apply the CSISecrets configuration by creating a YAML configuration file for the VaultStaticSecret resource. The CSISecrets resource defines the secrets to sync from Vault, including the mount path, secret path, access control patterns for service accounts/namespaces/pods, and container state sync configuration.
+
+![CSI Flow](./docs/vso_csi_secrets_flow.png)
 
 ```bash
 kubectl apply -f static-auth.yaml
